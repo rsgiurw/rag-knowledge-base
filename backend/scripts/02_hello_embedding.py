@@ -18,7 +18,7 @@ import numpy as np
 from rag.llm import embed
 
 if __name__ == "__main__":
-    words = ["猫", "狗", "汽车", "小猫喜欢抓老鼠"]
+    words = ["猫", "小猫", "狗", "小猫喜欢抓老鼠"]
     vectors = np.array(embed(words))
 
     print(f"模型返回的向量维度：{vectors.shape[1]}")

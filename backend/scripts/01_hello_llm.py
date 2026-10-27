@@ -88,7 +88,7 @@ if __name__ == "__main__":
     for i in range(3):
         ans = chat_once(
             [{"role": "user", "content": "给企业知识库产品随机起一个中文名字"}],
-            temperature=0.0,
+            temperature=1.5,
         )
         print(f"  第{i + 1}次: {ans}")
     print("\n再把 0.0 改成 1.5 各跑 3 次，把观察结论写进今晚的复盘笔记。")
