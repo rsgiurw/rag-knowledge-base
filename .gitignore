@@ -1,0 +1,25 @@
+# 密钥与环境（绝不入库）
+.env
+.venv/
+
+# 简历等隐私文件（绝不入库）
+张荀栋*.docx
+张荀栋*.pdf
+简历/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 数据与运行产物
+data/chroma/
+data/cache/
+*.log
+
+# 前端
+node_modules/
+frontend/dist/
+
+# ZCode 会话文件
+.zcode/
