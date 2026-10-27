@@ -6,6 +6,7 @@ scripts/01_hello_llm.py 是"教学版"：裸写 HTTP 调用，让你看清每次
 """
 import json
 import os
+import time
 
 import httpx
 from dotenv import load_dotenv
@@ -26,23 +27,49 @@ def _headers() -> dict:
     return {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
 
+def _post(url: str, payload: dict, max_retries: int = 3) -> httpx.Response:
+    """带重试与清晰报错的 POST。
+
+    429 只是表象，必须看返回体里的错误码才能对症：
+      - 1113 余额不足：重试没有意义，直接抛出人话提示；
+      - 1302/1305 等：频率/并发超限，指数退避后重试通常就能过。
+    """
+    for attempt in range(max_retries + 1):
+        resp = httpx.post(url, headers=_headers(), json=payload, timeout=120)
+        if resp.status_code != 429:
+            resp.raise_for_status()
+            return resp
+        try:
+            err_code = resp.json()["error"]["code"]
+        except Exception:
+            err_code = ""
+        if err_code == "1113":
+            raise RuntimeError(
+                "账户余额不足：embedding-3 是付费模型（glm-4-flash 聊天免费，所以 01 脚本能跑通）。"
+                "请到 https://open.bigmodel.cn 控制台充值，学习期 10~20 元绰绰有余。"
+            ) from None
+        if attempt == max_retries:
+            break
+        wait = 2 ** attempt  # 指数退避：1s、2s、4s
+        print(f"  [限流] API 429，{wait}s 后自动重试（{attempt + 1}/{max_retries}）...")
+        time.sleep(wait)
+    raise RuntimeError(f"API 持续限流，重试 {max_retries} 次仍失败：{resp.text[:200]}")
+
+
 def chat_once(messages: list[dict], temperature: float = 0.3) -> str:
     """非流式调用：一次性拿到完整回答。
 
     temperature 越低回答越稳定，知识库问答场景用低值（默认 0.3）；
     创意生成场景才调高。
     """
-    resp = httpx.post(
+    resp = _post(
         f"{BASE_URL}/chat/completions",
-        headers=_headers(),
-        json={
+        {
             "model": CHAT_MODEL,
             "messages": messages,
             "temperature": temperature,
         },
-        timeout=120,
     )
-    resp.raise_for_status()
     return resp.json()["choices"][0]["message"]["content"]
 
 
@@ -79,11 +106,8 @@ def chat_stream(messages: list[dict], temperature: float = 0.3):
 
 def embed(texts: list[str]) -> list[list[float]]:
     """把一批文本变成向量。返回顺序与输入顺序一一对应。"""
-    resp = httpx.post(
+    resp = _post(
         f"{BASE_URL}/embeddings",
-        headers=_headers(),
-        json={"model": EMBEDDING_MODEL, "input": texts},
-        timeout=120,
+        {"model": EMBEDDING_MODEL, "input": texts},
     )
-    resp.raise_for_status()
     return [item["embedding"] for item in resp.json()["data"]]
