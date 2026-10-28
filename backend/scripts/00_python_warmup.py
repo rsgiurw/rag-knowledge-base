@@ -18,14 +18,14 @@ import numpy as np
 # ---------- 第 1 关：字符串有多长 ----------
 def e01():
     s = "企业知识库问答系统"
-    n = 0  # TODO: 把 n 改成 s 的长度（用一个内置函数）
+    n = len(s)  # TODO: 把 n 改成 s 的长度（用一个内置函数）
     assert n == 9
 
 
 # ---------- 第 2 关：切片，取左段 ----------
 def e02():
     s = "ABCDEFGHIJ"
-    first3 = ""  # TODO: 取 s 的前 3 个字符（切片写法 s[a:b]，含头不含尾）
+    first3 = s[0:3]  # TODO: 取 s 的前 3 个字符（切片写法 s[a:b]，含头不含尾）
     assert first3 == "ABC"
 
 
@@ -33,14 +33,14 @@ def e02():
 def e03():
     s = "ABCDEFGHIJ"
     start, size = 4, 3
-    piece = ""  # TODO: 从下标 start 开始，取 size 个字符（下标 4 开始是 "EFG"）
+    piece = s[start:size+start]  # TODO: 从下标 start 开始，取 size 个字符（下标 4 开始是 "EFG"）
     assert piece == "EFG"
 
 
 # ---------- 第 4 关：切过头也不报错 ----------
 def e04():
     s = "ABCDEFGHIJ"  # 只有 10 个字符
-    piece = ""  # TODO: 从下标 8 开始想取 20 个字符（实际上只剩 2 个）
+    piece = s[8:20]  # TODO: 从下标 8 开始想取 20 个字符（实际上只剩 2 个）
     # 提示：Python 切片越界不报错、能取多少给多少——
     # 这正是分块时"最后一块更短"的天然行为，core.py 会直接利用它
     assert piece == "IJ"
@@ -52,6 +52,9 @@ def e05():
     i = 1
     # TODO: 用 while 循环把 1+2+...+10 累加进 total
     # 提醒：循环体内必须推进 i，否则死循环（Ctrl+C 可以中断）
+    while i<=10:
+        total+=i
+        i+=1
     assert total == 55
 
 
@@ -59,7 +62,7 @@ def e05():
 def e06():
     squares = []
     for x in [1, 2, 3, 4]:
-        pass  # TODO: 删掉 pass，把 x*x 追加进 squares（列表的方法 append）
+        squares.append(x * x)  # TODO: 删掉 pass，把 x*x 追加进 squares（列表的方法 append）
     assert squares == [1, 4, 9, 16]
 
 
@@ -67,14 +70,15 @@ def e06():
 def e07():
     d = {"text": "一段分块内容", "start": 250}
     a = d["text"]  # 这就是按键取值
-    b = 0  # TODO: 把 b 改成 d 里键为 "start" 的值
+    b = d["start"] # TODO: 把 b 改成 d 里键为 "start" 的值
     assert (a, b) == ("一段分块内容", 250)
 
 
 # ---------- 第 8 关：函数与 return ----------
 def e08():
     def next_start(cur, chunk_size, overlap):
-        return 0  # TODO: 返回"下一块的起点" = 当前起点 + chunk_size - overlap
+          # TODO: 返回"下一块的起点" = 当前起点 + chunk_size - overlap
+          return cur + chunk_size - overlap
     assert next_start(0, 300, 50) == 250
     assert next_start(250, 300, 50) == 500
 
@@ -88,15 +92,18 @@ def e09():
     #   ① 把 text[start:start+5] 追加进 chunks        （第 3 关 + 第 6 关）
     #   ② start 推进 5 - 1 = 4                        （第 5 关 + 第 8 关）
     # 循环条件：start 小于字符串长度
-    assert chunks == ["甲乙丙甲乙", "乙丙甲乙丙", "丙甲乙"]
+    while start<len(text):
+        chunks.append(text[start:start+5])
+        start+=4
+    assert chunks == ["甲乙丙甲乙", "乙丙甲乙丙", "丙甲乙丙"]
 
 
 # ---------- 第 10 关：numpy 点积与模长 ----------
 def e10():
     a = np.array([1.0, 0.0])
     b = np.array([3.0, 4.0])
-    dot = 0.0  # TODO: a 和 b 的点积（写法：a @ b）
-    nb = 0.0   # TODO: b 的模长（向量长度，写法：np.linalg.norm(b)）
+    dot = a@b  # TODO: a 和 b 的点积（写法：a @ b）
+    nb = np.linalg.norm(b)   # TODO: b 的模长（向量长度，写法：np.linalg.norm(b)）
     assert dot == 3.0
     assert abs(nb - 5.0) < 1e-9
 

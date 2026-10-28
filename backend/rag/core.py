@@ -26,9 +26,9 @@ def chunk_text(text: str, chunk_size: int = 300, overlap: int = 50) -> list[dict
     chunks = []
     start = 0                       # 第一块从下标 0 开始
     while start < len(text):        # 只要还没切到文末，就继续切
-        piece = text[start:start]   # TODO-1: 应该取多长？改成正确的切片终点
+        piece = text[start:start+chunk_size]   # TODO-1: 应该取多长？改成正确的切片终点
         chunks.append({"text": piece, "start": start})
-        break                       # TODO-2: 删掉这行 break，替换成"把 start 推进到下一块起点"的语句（热身第 8 关）
+        start += chunk_size - overlap              # TODO-2: 删掉这行 break，替换成"把 start 推进到下一块起点"的语句（热身第 8 关）
     return chunks
 
 
@@ -38,6 +38,6 @@ def cosine_similarity(a, b) -> float:
     面试要求：能白板推出这个公式，并说清"为什么用余弦不用欧氏距离"
     （答案方向在 docs/day01-讲义.md 第四节，走读时我会抽查）。
     """
-    dot = 0.0    # TODO-3: 向量 a 与 b 的点积（第 10 关出现过）
-    norm = 1.0   # TODO-4: a 的模长 乘 b 的模长
+    dot = a@b    # TODO-3: 向量 a 与 b 的点积（第 10 关出现过）
+    norm = np.linalg.norm(a)*np.linalg.norm(b)   # TODO-4: a 的模长 乘 b 的模长
     return float(dot / norm)

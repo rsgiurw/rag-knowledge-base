@@ -39,15 +39,16 @@ PROMPT_TEMPLATE = """你是一个企业知识库助手。遵守以下规则：
 {question}"""
 
 
-def build_knowledge_base(chunk_size: int = 300, overlap: int = 50):
+def build_knowledge_base(chunk_size: int = 800, overlap: int = 50):
     """离线索引：读文档 → 分块（你写的）→ 向量化（API）。"""
     chunks = []
-    for f in sorted(DATA_DIR.glob("*.md")):
+    files = sorted(DATA_DIR.glob("*.md"))
+    for f in files:
         text = f.read_text(encoding="utf-8")
         for c in chunk_text(text, chunk_size, overlap):
             chunks.append({"source": f.name, **c})
     vectors = np.array(embed([c["text"] for c in chunks]))
-    print(f"知识库就绪：{len(DATA_DIR.glob('*.md'))} 篇文档 → {len(chunks)} 个分块")
+    print(f"知识库就绪：{len(files)} 篇文档 → {len(chunks)} 个分块")
     return chunks, vectors
 
 

@@ -14,6 +14,7 @@ __pycache__/
 
 # 数据与运行产物
 data/chroma/
+data/qdrant/
 data/cache/
 *.log
 

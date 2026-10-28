@@ -49,7 +49,7 @@ cd backend && python -m venv .venv
 ## 路线图
 
 - [x] Day 1：项目骨架 / 裸调 GLM API / embedding 实验
-- [ ] Day 2：手写分块 + 余弦相似度 → 最小 RAG CLI（带引用溯源）
+- [x] Day 2：手写分块 + 余弦相似度 → 最小 RAG CLI（带引用溯源）
 - [ ] Week 1 后半：FastAPI + SSE 流式 + React 界面
 - [ ] Week 2：混合检索(BM25+向量+RRF) / Rerank / Query 改写 + 自建评测集
 - [ ] Week 3：安全模块（注入防护 / PII 脱敏 / 合规规则引擎）+ Docker 部署
