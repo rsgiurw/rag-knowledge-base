@@ -14,13 +14,29 @@
      同步阻塞的 httpx，写进 async def 会卡死整个事件循环；FastAPI 对普通 def
      路由会自动丢进线程池执行，不阻塞其他请求。Day 4 讲 SSE 时升级为真异步。
 """
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from app import qa, store
 from app.schemas import AskRequest, AskResponse, DocumentInfo
 
 app = FastAPI(title="企业知识库问答系统", version="0.1.0")
+
+STATIC_DIR = Path(__file__).parent / "static"
+
+
+@app.get("/", include_in_schema=False)
+async def index():
+    """极简聊天页（纯 HTML 单文件，零依赖）。浏览器打开 http://127.0.0.1:8000 即用。
+
+    为什么不直接写进 React：Day 5-6 的正式前端是独立工程（Vite 开发服务器 5173），
+    这个页面是 Day 3-4 的过渡品——够用、能演示，且让"前端"与"后端接口"解耦的
+    架构先把跑通（页面只认 /api/*，Day 4 接口升级为 SSE 流式时页面同步小改）。
+    """
+    return FileResponse(STATIC_DIR / "index.html")
 
 # 跨域放行：Day 5 的 React 开发服务器跑在 5173 端口，提前配好（浏览器同源策略）
 app.add_middleware(

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企业知识库问答系统</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, "Microsoft YaHei", sans-serif;
+    background: #f0f2f5; color: #1f2937; min-height: 100vh;
+  }
+  header {
+    background: #fff; padding: 14px 24px; border-bottom: 1px solid #e5e7eb;
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  header h1 { font-size: 18px; }
+  header span { font-size: 12px; color: #6b7280; }
+  .layout {
+    display: grid; grid-template-columns: 340px 1fr; gap: 16px;
+    max-width: 1100px; margin: 16px auto; padding: 0 16px; align-items: start;
+  }
+  @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+  .card {
+    background: #fff; border-radius: 10px; padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  .card h2 { font-size: 15px; margin-bottom: 12px; color: #111827; }
+  /* 文档区 */
+  .upload-row { display: flex; gap: 8px; align-items: center; }
+  .doc-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 8px;
+  }
+  .doc-item .name { font-size: 13px; word-break: break-all; }
+  .doc-item .meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  /* 通用按钮 */
+  button {
+    border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px;
+    cursor: pointer; background: #2563eb; color: #fff;
+  }
+  button:disabled { background: #93c5fd; cursor: not-allowed; }
+  button.ghost { background: #f3f4f6; color: #374151; }
+  button.danger { background: #fee2e2; color: #b91c1c; padding: 4px 10px; font-size: 12px; }
+  /* 对话区 */
+  .chat-box { height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
+  .bubble { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+  .bubble.user { align-self: flex-end; background: #2563eb; color: #fff; border-bottom-right-radius: 4px; }
+  .bubble.bot  { align-self: flex-start; background: #f3f4f6; border-bottom-left-radius: 4px; }
+  .bubble.bot .timing { font-size: 11px; color: #9ca3af; margin-top: 6px; }
+  .cite {
+    margin-top: 10px; border-left: 3px solid #93c5fd; background: #eff6ff;
+    padding: 6px 10px; border-radius: 0 6px 6px 0; font-size: 12px; color: #1e40af;
+  }
+  .cite b { color: #1d4ed8; }
+  .cite .txt { color: #475569; margin-top: 2px; }
+  .ask-row { display: flex; gap: 8px; margin-top: 12px; }
+  textarea {
+    flex: 1; resize: none; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 10px; font-size: 14px; font-family: inherit; height: 64px;
+  }
+  textarea:focus { outline: 2px solid #bfdbfe; border-color: #2563eb; }
+  select { border: 1px solid #d1d5db; border-radius: 8px; padding: 6px; font-size: 13px; }
+  .tip { font-size: 12px; color: #9ca3af; margin-top: 6px; }
+  .error { color: #b91c1c; font-size: 13px; margin-top: 8px; white-space: pre-wrap; }
+  .empty { color: #9ca3af; font-size: 13px; text-align: center; padding: 40px 0; }
+  .status { font-size: 13px; color: #6b7280; padding: 8px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>企业知识库问答系统</h1>
+  <span>回答仅基于已上传的文档，并附引用来源</span>
+</header>
+
+<div class="layout">
+  <!-- 左：文档管理 -->
+  <div class="card">
+    <h2>📚 文档管理</h2>
+    <div class="upload-row">
+      <input type="file" id="fileInput" accept=".md,.txt,.pdf,.docx" style="font-size:12px">
+      <button id="uploadBtn" onclick="upload()">上传</button>
+    </div>
+    <div class="tip">支持 .md / .txt / .pdf / .docx，同名内容重复上传会自动覆盖</div>
+    <div id="docError" class="error"></div>
+    <div id="docList" style="margin-top:10px"></div>
+  </div>
+
+  <!-- 右：问答 -->
+  <div class="card">
+    <h2>💬 知识库问答</h2>
+    <div class="ask-row" style="margin:0 0 10px">
+      <label style="font-size:13px;color:#6b7280">引用资料块数：</label>
+      <select id="topK">
+        <option>1</option><option>2</option><option selected>3</option>
+        <option>4</option><option>5</option>
+      </select>
+    </div>
+    <div id="chat" class="chat-box">
+      <div class="empty">还没有对话。先在左侧上传文档，然后在下方提问。</div>
+    </div>
+    <div class="ask-row">
+      <textarea id="question" placeholder="输入问题，Enter 发送，Shift+Enter 换行&#10;例如：年假有几天？"></textarea>
+      <button id="askBtn" onclick="ask()">提问</button>
+    </div>
+    <div id="askError" class="error"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const chat = $('chat');
+
+/* ---------- 文档管理 ---------- */
+async function loadDocs() {
+  const list = $('docList');
+  try {
+    const docs = await fetch('/api/documents').then(r => r.json());
+    if (!docs.length) {
+      list.innerHTML = '<div class="status">知识库为空，先上传文档。</div>';
+      return;
+    }
+    list.innerHTML = docs.map(d => `
+      <div class="doc-item">
+        <div>
+          <div class="name">${escapeHtml(d.filename)}</div>
+          <div class="meta">${d.chunks} 个分块 · id: ${d.doc_id}</div>
+        </div>
+        <button class="danger" onclick="delDoc('${d.doc_id}')">删除</button>
+      </div>`).join('');
+  } catch (e) { list.innerHTML = `<div class="error">加载列表失败：${e}</div>`; }
+}
+
+async function upload() {
+  const input = $('fileInput'), btn = $('uploadBtn'), err = $('docError');
+  err.textContent = '';
+  if (!input.files.length) { err.textContent = '请先选择一个文件'; return; }
+  btn.disabled = true; btn.textContent = '解析中…';
+  try {
+    const fd = new FormData();
+    fd.append('file', input.files[0]);
+    const r = await fetch('/api/documents', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || r.status);
+    input.value = '';
+    await loadDocs();
+    addBubble('bot', `《${data.filename}」上传成功：解析出 ${data.chunks} 个分块，已入库，可以提问了。`);
+  } catch (e) { err.textContent = '上传失败：' + e.message; }
+  btn.disabled = false; btn.textContent = '上传';
+}
+
+async function delDoc(docId) {
+  if (!confirm('确定删除这篇文档的所有内容吗？')) return;
+  const err = $('docError');
+  err.textContent = '';
+  try {
+    const r = await fetch('/api/documents/' + docId, { method: 'DELETE' });
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      if (r.status === 500) throw new Error('删除接口还没实现——这正是 Day 3 的填空任务，去 backend/app/main.py 完成 delete_document 两行代码！');
+      throw new Error(data.detail || r.status);
+    }
+    await loadDocs();
+  } catch (e) { err.textContent = e.message; }
+}
+
+/* ---------- 问答 ---------- */
+async function ask() {
+  const q = $('question').value.trim();
+  const btn = $('askBtn'), err = $('askError');
+  err.textContent = '';
+  if (!q) { err.textContent = '请输入问题'; return; }
+  addBubble('user', q);
+  $('question').value = '';
+  btn.disabled = true;
+  const thinking = addBubble('bot', '正在检索知识库并思考…');
+  const t0 = performance.now();
+  try {
+    const r = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, top_k: Number($('topK').value) }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || r.status);
+    const secs = ((performance.now() - t0) / 1000).toFixed(1);
+    const cites = (data.citations || []).map(c => `
+      <div class="cite"><b>📄 ${escapeHtml(c.source)}</b> · 相似度 ${c.score}
+        <div class="txt">${escapeHtml(c.text.slice(0, 60))}…</div>
+      </div>`).join('');
+    thinking.innerHTML =
+      escapeHtml(data.answer).replace(/\n/g, '<br>')
+      + cites
+      + `<div class="timing">耗时 ${secs} 秒 · top_k=${$('topK').value}</div>`;
+  } catch (e) {
+    thinking.textContent = '出错了：' + e.message;
+    err.textContent = '请确认后端服务正在运行（uvicorn）。';
+  }
+  btn.disabled = false;
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addBubble(role, text) {
+  chat.querySelector('.empty')?.remove();
+  const div = document.createElement('div');
+  div.className = 'bubble ' + (role === 'user' ? 'user' : 'bot');
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+$('question').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); }
+});
+
+loadDocs();
+</script>
+</body>
+</html>
